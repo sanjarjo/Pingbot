@@ -2,7 +2,15 @@ import os
 import asyncio
 import aiohttp
 from aiogram import Bot
+from flask import Flask
+import threading
+import os
 
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Ping bot ishlayapti!", 200
 # Load environment variables
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
@@ -57,5 +65,12 @@ async def main_loop():
         await asyncio.sleep(PING_INTERVAL)
 
 
+# Async main_loop’ni Flask bilan parallel ishlatish
 if __name__ == "__main__":
-    asyncio.run(main_loop())
+    # Async loop ni thread’da ishga tushuramiz
+    loop = asyncio.get_event_loop()
+    threading.Thread(target=lambda: loop.run_until_complete(main_loop()), daemon=True).start()
+
+    # Flask server → port binding
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
